@@ -1,207 +1,211 @@
-const PassThrough = require('stream').PassThrough;
-const deprecate   = require('util').deprecate;
-const getInfo     = require('./info');
-const util        = require('./util');
-const sig         = require('./sig');
-const request     = require('miniget');
-const m3u8stream  = require('m3u8stream');
-const parseTime   = require('m3u8stream/lib/parse-time');
+const Discord = require('discord.js');
+const YTDL = require("ytdl-core");
+const bot = new Discord.Client();
 
+const TOKEN = "NDc3MTU1Nzk1MjI2NTkxMjUz.DlVhaw.auZSSBE1okMCVDFoTKfqbQO7BM4"
+const PREFIX = "-"
 
-/**
- * @param {String} link
- * @param {!Object} options
- * @return {ReadableStream}
- */
-const ytdl = module.exports = function ytdl(link, options) {
-  const stream = createStream(options);
-  ytdl.getInfo(link, options, (err, info) => {
-    if (err) {
-      stream.emit('error', err);
-      return;
-    }
-
-    downloadFromInfoCallback(stream, info, options);
-  });
-
-  return stream;
-};
-
-ytdl.getBasicInfo = getInfo.getBasicInfo;
-ytdl.getInfo = getInfo.getFullInfo;
-ytdl.chooseFormat = util.chooseFormat;
-ytdl.filterFormats = util.filterFormats;
-ytdl.validateID = util.validateID;
-ytdl.validateURL = util.validateURL;
-ytdl.validateLink = deprecate(util.validateURL,
-  'ytdl.validateLink: Renamed to ytdl.validateURL');
-ytdl.getURLVideoID = util.getURLVideoID;
-ytdl.getVideoID = util.getVideoID;
-ytdl.cache = {
-  sig: sig.cache,
-  info: getInfo.cache,
-};
-
-
-function createStream(options) {
-  const stream = new PassThrough({
-    highWaterMark: options && options.highWaterMark || null,
-  });
-  stream.destroy = () => { stream._isDestroyed = true; };
-  return stream;
+function generateHex(){
+    return "#" + Math.floor(Math.random() * 16777215).toString(16);
 }
 
 
-/**
- * Chooses a format to download.
- *
- * @param {stream.Readable} stream
- * @param {Object} info
- * @param {Object} options
- */
-function downloadFromInfoCallback(stream, info, options) {
-  options = options || {};
-  const format = util.chooseFormat(info.formats, options);
-  if (format instanceof Error) {
-    // The caller expects this function to be async.
-    setImmediate(() => {
-      stream.emit('error', format);
-    });
-    return;
-  }
-  stream.emit('info', info, format);
-  if (stream._isDestroyed) { return; }
 
-  let url = format.url;
-  if (format.live) {
-    let req = m3u8stream(url, {
-      chunkReadahead: +info.live_chunk_readahead,
-      begin: options.begin || Date.now(),
-      liveBuffer: options.liveBuffer,
-      requestOptions: options.requestOptions,
-    });
-    req.on('error', stream.emit.bind(stream, 'error'));
-    stream.destroy = req.end.bind(req);
-    req.pipe(stream);
 
-  } else {
-    if (options.begin) {
-      url += '&begin=' + parseTime(options.begin);
-    }
-    doDownload(stream, url, options, {
-      trys: options.retries || 5,
-      range: {
-        start: options.range && options.range.start ? options.range.start : 0,
-        end: options.range && options.range.end ? options.range.end : -1,
-      },
-      downloaded: 0,
-    });
-  }
+var servers = {};
+
+function play(connection, message){
+    var server = servers[message.guild.id]
+
+    server.dispatcher = connection.playStream(YTDL(server.queue[0],{filter: "audioonly"} ));
+
+    server.queue.shift();
+
+    server.dispatcher.on("end",function(){
+        if (server.queue[0]) play (connection, message);
+        else connection.disconnect();
+    })
 }
 
+var fortunes =[
+    " YES",
+    " NO",
+    " Maybe",
+    " FUCK U",
+    " Все может быть"
+];
 
-/**
- * Tries to download the video. If the download stops halfway, attempts to
- * reconnect, continuing the download where it left off.
- *
- * @param {stream.Readable} stream
- * @param {String} url
- * @param {Object} options
- * @param {Object} reconnectInfo
- */
-function doDownload(stream, url, options, reconnectInfo) {
-  if (reconnectInfo.trys === 0) {
-    stream.emit('error', new Error('Too many reconnects'));
-    return;
-  }
 
-  // Start downloading the video.
-  let rangedUrl = url;
-  if (reconnectInfo.downloaded !== 0 ||
-      reconnectInfo.range.start !== 0 ||
-      reconnectInfo.range.end !== -1) {
-    let start = reconnectInfo.range.start + reconnectInfo.downloaded;
-    let end = reconnectInfo.range.end != -1 ? reconnectInfo.range.end : '';
-    rangedUrl += '&range=' + start + '-' + end;
-  }
 
-  const req = request(rangedUrl, options.requestOptions);
+bot.on('ready',function()
+{
+    console.log(bot.user.username, 'is online');
 
-  function cleanup() {
-    req.removeListener('end', onend);
-    req.removeListener('data', ondata);
-    req.unpipe();
-  }
 
-  let myres = false;
-  stream.destroy = () => {
-    stream._isDestroyed = true;
-    req.abort();
-    cleanup();
-  };
+    bot.user.setActivity("КАК ИЛЮХА ДРОЧИТ", {type: "WATCHING"});
 
-  // Forward events from the request to the stream.
-  ['abort', 'request', 'response'].forEach(function(event) {
-    req.on(event, (arg) => {
-      stream.emit.call(stream, event, arg);
+
+
+});
+
+
+
+bot.on("guildMemberAdd", function(member){
+    member.guild.channels.find("name","general").send(member.toString() + "Welcome bitchi ie boty");
+
+
+    member.addRole(member.guild.roles.find("name","bitch"));
+    member.user.username = '<new player>'
+
+    member.guild.createRole({
+        name: member.user.username,
+        color: generateHex(),
+        permissions:[]
+    }).then(function(role){
+
+        member.addRole(role)
+
+    })
+});
+
+
+bot.on('message', function(message)
+{
+
+        
+
+    
+if( message.author.equals(bot.user)) return;
+
+    if(!message.content.startsWith(PREFIX)) return;
+
+    const args = message.content.substring(PREFIX.length).split(" ");
+
+        switch (args[0].toLowerCase()){
+                case "ping":
+                message.channel.send("Pong!")
+            break;
+                case "info":
+                message.channel.send("Я бот созданный > afikei")
+            break;
+                case "check":
+                if(args[1])
+                    message.channel.send(fortunes[Math.floor(Math.random() * fortunes.length)]); 
+                    else message.channel.send("Can't read that")
+                break;
+
+                case "embed":
+                    const embed = new Discord.RichEmbed()
+                        .addField("ИЛЮХА","ХУЙ ТЕБЕ В УХО",true)
+                        .addField("ТЕСТОВАЯ ","ПАНЕЛЬ",true)
+                        .addField("ИЛЮХА","ХУЙ ТЕБЕ В УХО",true)
+                        .setColor(0x00FFFF)
+                        .setFooter("Он сосет члены каждый день))")
+                        .setThumbnail(message.author.avatarURL)
+                message.channel.send(embed);
+                break;
+                case "hello":
+                    message.channel.send(message.author.toString() + " Hello");
+                break;
+                case "removerole":
+                    message.member.removeRole(member.guild.roles.find("name","bitch"));
+                break;
+
+                case "deleterole":
+                   message.member.guild.roles.find("name","bitch").delete();
+                break;
+                case "play":
+                message.delete()
+                if (!args[1]){
+                    message.channel.send("Please provid a link")
+                    return
+                }
+
+                if (!message.member.voiceChannel){
+                    message.channel.send("You must be in a voice channel")
+                    return
+                }
+                if(!servers[message.guild.id]) servers[message.guild.id] = {
+                        queue:[]
+                };
+
+                var server = servers[message.guild.id];
+
+                server.queue.push(args[1]);
+
+                if(!message.guild.voiceConnection) message.member.voiceChannel.join().then(function(connection){
+                    play(connection, message);
+                });
+                break;
+                case "skip":
+
+                var server = servers[message.guild.id];
+
+                if(server.dispatcher) server.dispatcher.end();
+
+                break;
+                case "stop":
+                message.delete()
+                var server = servers[message.guild.id];
+
+                if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect();
+
+                break;
+                case "botinfo":
+                    let bicon = bot.user.displayAvatarURL;
+                    let botembed = new Discord.RichEmbed()
+                    .setDescription("Bot Information")
+                    .setColor("#9b42f4")
+                    .setThumbnail(bicon)
+                    .addField("Bot Name", bot.user.username)
+                    .addField("Created on", bot.user.createdAt);
+                    
+                message.channel.send(botembed);
+                break;
+                case "serverinfo":
+               
+                    let sicon = message.guild.iconURL;
+                    let serverembed = new Discord.RichEmbed()
+                    .setDescription("Server Information")
+                    .setColor("#f44159")
+                    .setThumbnail(sicon)
+                    .addField("Server Name", message.guild.name)
+                    .addField("Created On", message.guild.createdAt)
+                    .addField("You joined", message.member.joinedAt)
+                    .addField("Total Members",message.guild.memberCount)
+                 message.channel.send(serverembed);
+                break;
+
+                case "report":
+                
+                let rUser = message.guild.member(message.mentions.users.first() || message.guild.members.get(args[0]));
+                if(!rUser) return message.channel.send("Couldn't find user.");
+                let reason = args.join(" ").slice(22);
+                
+                let reportEmbed = new Discord.RichEmbed()
+                .setDescription("Reports")
+                .setColor("#f45241")
+                .addField("Reported User",`${rUser} with ID: ${rUser.id}`)
+                .addField("Reported by", `${message.author} with ID: ${message.author.id}`)
+                .addField("Channel", message.channel)
+                .addField("Time", message.createdAt)
+                .addField("Reason", reason);
+                message.channel.send(reportEmbed);
+/*
+                let reportschannel = message.guild.channels.find(`name`, "reports");
+                if(!reportschannel) return message.channel.send("Couldn't find reports channel.");
+
+
+                message.delete().catch(O_o=>{});
+                reportschannel.send(reportEmbed);
+
+                return;*/
+            default:
+            message.channel.send("Invalid command")
+        }
     });
-  });
+ 
+    
 
-  function onend() {
-    cleanup();
-
-    // Reconnect if there is more to be downloaded.
-    if (reconnectInfo.downloaded < reconnectInfo.total) {
-      reconnectInfo.trys = reconnectInfo.trys - 1;
-      doDownload(stream, url, options, reconnectInfo);
-    } else {
-      stream.end();
-    }
-  }
-
-  req.on('error', (err) => {
-    if (stream._isDestroyed || !myres) {
-      stream.emit('error', err);
-    } else {
-      onend();
-    }
-  });
-
-  req.on('response', (res) => {
-    myres = true;
-    if (stream._isDestroyed) { return; }
-    if (reconnectInfo.downloaded === 0) {
-      reconnectInfo.total = parseInt(res.headers['content-length']);
-    }
-  });
-
-  function ondata(chunk) {
-    const downloaded = reconnectInfo.downloaded += chunk.length;
-    stream.emit('progress', chunk.length, downloaded, reconnectInfo.total);
-  }
-
-  req.on('data', ondata);
-  req.on('end', onend);
-  req.pipe(stream, { end: false });
-}
-
-
-/**
- * Can be used to download video after its `info` is gotten through
- * `ytdl.getInfo()`. In case the user might want to look at the
- * `info` object before deciding to download.
- *
- * @param {Object} info
- * @param {!Object} options
- */
-ytdl.downloadFromInfo = (info, options) => {
-  const stream = createStream(options);
-  if (!info.full) {
-    throw new Error('Cannot use `ytdl.downloadFromInfo()` when called ' +
-      'with info from `ytdl.getBasicInfo()`');
-  }
-  setImmediate(() => {
-    downloadFromInfoCallback(stream, info, options);
-  });
-  return stream;
-};
+    
+    bot.login(process.env.TOKEN);
