@@ -200,13 +200,7 @@ if( message.author.equals(bot.user)) return;
                 reportschannel.send(reportEmbed);
 
                 return;*/
-            case "clear":
-                if(!message.member.hasPermission("MANAGE_MESSAGES)) return.reply("oof.");
-                if(!args[0]) return message.channel.send("oof");
-                message.channel.send(`Cleared ${args[0]} messages.`).then(msg => msg.delete(5000));
-                
-                
-                break;
+            
             default:
             message.channel.send("Invalid command")
         }
