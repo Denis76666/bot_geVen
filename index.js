@@ -83,7 +83,7 @@ if( message.author.equals(bot.user)) return;
 
         switch (args[0].toLowerCase()){
                 case "ping":
-                message.channel.send("Pong!")
+                message.channel.send("Pong!!!!")
             break;
                 case "info":
                 message.channel.send("Я бот созданный > afikei")
