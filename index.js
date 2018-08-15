@@ -42,7 +42,7 @@ bot.on('ready',function()
     console.log(bot.user.username, 'is online');
 
 
-    bot.user.setActivity("КАК ИЛЮХА ДРОЧИТ", {type: "WATCHING"});
+    bot.user.setActivity("работаю 24/7", {type: "WATCHING"});
 
 
 
