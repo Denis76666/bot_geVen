@@ -42,7 +42,7 @@ bot.on('ready',function()
     console.log(bot.user.username, 'is online');
 
 
-    bot.user.setActivity(в глубокую дырку твоей мамы", {type: "WATCHING"});
+    bot.user.setActivity("в глубокую дырку твоей мамы", {type: "WATCHING"});
 
 
 
