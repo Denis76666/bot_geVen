@@ -42,7 +42,7 @@ bot.on('ready',function()
     console.log(bot.user.username, 'is online');
 
 
-    bot.user.setActivity("в глубокую дырку ИЛЬИ", {type: "WATCHING"});
+    bot.user.setActivity("Илья пидорас и Нытик, убейте его...", {type: "WATCHING"});
 
 
 
