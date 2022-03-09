@@ -3,7 +3,7 @@ const YTDL = require("ytdl-core");
 const bot = new Discord.Client();
 
 const TOKEN = "test"
-const PREFIX = "-"
+const PREFIX = "+"
 
 function generateHex(){
     return "#" + Math.floor(Math.random() * 16777215).toString(16);
