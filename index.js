@@ -2,7 +2,7 @@ const Discord = require('discord.js');
 const YTDL = require("ytdl-core");
 const bot = new Discord.Client();
 
-const TOKEN = "suck"
+const TOKEN = "test"
 const PREFIX = "-"
 
 function generateHex(){
